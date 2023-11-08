@@ -1,0 +1,107 @@
+--union of dataset to create 12months dataset: 
+select * into cyclistic_year_tripdata from
+(select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2210_tripdata
+UNION 
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2211_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_legnth, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2212_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2301_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2302_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2303_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2304_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2305_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2306_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2307_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2308_tripdata
+UNION
+select ride_id, rideable_type, started_at, ended_at, ride_length, day_of_week, start_station_name, end_station_name , member_casual 
+from cyclistic_tripdata.dbo.cyclistic2309_tripdata) a
+
+--convert ride length to time format only:
+select * into cyclistic_timedata from
+(select ride_id, rideable_type, started_at, ended_at, day_of_week, start_station_name, end_station_name , member_casual, 
+convert(char(8), ride_length, 108) [ride_duration]
+from cyclistic_year_tripdata) a
+
+select *
+from cyclistic_timedata
+ 
+--average ride length over the fall and winter period (months: October to March)
+--fall October - December
+select member_casual, cast(cast(avg(cast(cast(ride_duration as datetime) as float)) as datetime) as time) as ave_ride_duration
+from cyclistic_timedata
+where started_at >= '2022-10-01T00:00:00.000' and started_at <= '2022-12-31T00:00:00.000'
+group by member_casual
+
+--winter January - March 
+select member_casual, cast(cast(avg(cast(cast(ride_duration as datetime) as float)) as datetime) as time) as ave_ride_duration
+from cyclistic_timedata
+where started_at >= '2023-01-01T00:00:00.000' and started_at <= '2023-03-31T00:00:00.000'
+group by member_casual
+
+--average ride length over the spring and summer period (months: April to September)
+--spring April - June 
+select member_casual, cast(cast(avg(cast(cast(ride_duration as datetime) as float)) as datetime) as time) as ave_ride_duration
+from cyclistic_timedata
+where started_at >= '2023-04-01T00:00:00.000' and started_at <= '2023-06-30T00:00:00.000'
+group by member_casual
+
+--summer July - September 
+select member_casual, cast(cast(avg(cast(cast(ride_duration as datetime) as float)) as datetime) as time) as ave_ride_duration
+from cyclistic_timedata
+where started_at >= '2023-07-01T00:00:00.000' and started_at <= '2023-09-30T00:00:00.000'
+group by member_casual
+
+--calculating the mode for day of week
+SELECT day_of_week, COUNT(*) AS most_prefered_day
+FROM cyclistic_timedata
+where day_of_week is not null
+GROUP BY day_of_week
+order by most_prefered_day desc
+
+--the most prefered day of week between casual & member riders
+SELECT day_of_week, 
+member_casual, count(member_casual) AS count_of_casual_member_day
+FROM cyclistic_timedata
+where day_of_week is not null
+GROUP BY day_of_week, member_casual
+order by count_of_casual_member_day desc
+
+
+--the most prefered type of ride between casual & member riders
+SELECT rideable_type, 
+member_casual, count(member_casual) AS count_of_casual_member_riders
+FROM cyclistic_timedata
+where rideable_type is not null
+GROUP BY rideable_type, member_casual
+order by count_of_casual_member_riders desc
+
+--the most prefered start_station (name)
+SELECT TOP 10 start_station_name, 
+member_casual, count(member_casual) AS count_of_casual_member_station
+FROM cyclistic_timedata
+where start_station_name is not null
+GROUP BY start_station_name, member_casual
+order by count_of_casual_member_station desc
+
+
+
